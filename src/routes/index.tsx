@@ -69,7 +69,7 @@ function LandingPage() {
             Your personal movie collection, beautifully organized
           </p>
           <p className="text-gray-500 max-w-xl mx-auto mb-12 text-lg">
-            Add movies by their IMDB ID and build your curated collection with detailed information, ratings, and stunning visuals.
+            Search for movies by title and build your curated collection with detailed information, ratings, and stunning visuals.
           </p>
           
           {/* CTA Buttons */}
@@ -152,9 +152,9 @@ function LandingPage() {
           
           <div className="flex flex-col md:flex-row items-center justify-between gap-12">
             {[
-              { step: '1', title: 'Find a Movie', desc: 'Go to IMDB and find a movie you love', color: 'from-cyan-500 to-blue-500' },
-              { step: '2', title: 'Copy the ID', desc: 'Copy the ID from the URL (e.g., tt0111161)', color: 'from-purple-500 to-pink-500' },
-              { step: '3', title: 'Add to Collection', desc: 'Paste it in the dashboard and you\'re done!', color: 'from-orange-500 to-red-500' },
+              { step: '1', title: 'Search for Movie', desc: 'Type the name of any movie you love', color: 'from-cyan-500 to-blue-500' },
+              { step: '2', title: 'Select Result', desc: 'Choose the correct movie from the list', color: 'from-purple-500 to-pink-500' },
+              { step: '3', title: 'Add to Collection', desc: 'Click to add it to your dashboard!', color: 'from-orange-500 to-red-500' },
             ].map((item, index) => (
               <div key={index} className="flex-1 text-center group">
                 <div className="relative inline-block mb-6">
