@@ -12,11 +12,27 @@ const config = defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Force @libsql/client to use the web version
+      '@libsql/client': '@libsql/client/web',
     },
   },
   plugins: [
     devtools(),
-    nitro(),
+    nitro({
+      preset: 'vercel',
+      rollupConfig: {
+        external: [
+          '@libsql/linux-x64-gnu',
+          '@libsql/linux-x64-musl',
+          '@libsql/linux-arm64-gnu',
+          '@libsql/linux-arm64-musl',
+          '@libsql/darwin-x64',
+          '@libsql/darwin-arm64',
+          '@libsql/win32-x64-msvc',
+          'libsql',
+        ],
+      },
+    }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
@@ -28,3 +44,4 @@ const config = defineConfig({
 })
 
 export default config
+
