@@ -38,8 +38,11 @@ function LandingPage() {
     <div className="min-h-screen bg-black overflow-hidden">
       {/* Grid background */}
       <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none" />
-      {/* Spotlight effect - fixed above header, hides on scroll */}
-      {showSpotlight && <Spotlight className="fixed -top-40 left-[30%] z-30" fill="white" />}
+      {/* Spotlight effect - fixed above header, fades on scroll */}
+      <Spotlight 
+        className={`fixed -top-40 left-[30%] z-30 spotlight-fade ${!showSpotlight ? 'hidden' : ''}`} 
+        fill="white" 
+      />
       {/* Header */}
       <header className="sticky top-0 z-40 px-6 h-14 flex items-center justify-between backdrop-blur-md bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] bg-black/80">
         <Link to="/" className="flex items-center gap-2">

@@ -1,7 +1,9 @@
 import { createFileRoute, useRouter, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Film, Loader2, Plus, Tv, Clapperboard, Github } from 'lucide-react'
 import MovieCard from '../components/MovieCard'
+import MovieCardSkeleton from '../components/MovieCardSkeleton'
+import Pagination from '../components/Pagination'
 import AddMovieForm from '../components/AddMovieForm'
 import { getAllMovies, addMovie, deleteMovie } from '../server/movies'
 import type { Movie } from '../db/schema'
@@ -9,17 +11,84 @@ import type { Movie } from '../db/schema'
 export const Route = createFileRoute('/dashboard')({
   component: Dashboard,
   loader: async () => await getAllMovies(),
+  pendingComponent: DashboardSkeleton,
 })
+
+function DashboardSkeleton() {
+  return (
+    <div className="min-h-screen bg-black overflow-hidden">
+      {/* Grid background */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none" />
+      {/* Header */}
+      <header className="sticky top-0 z-40 px-6 h-14 flex items-center justify-between backdrop-blur-md bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] bg-black/80">
+        <Link to="/" className="flex items-center gap-2">
+          <Clapperboard size={20} className="text-white" />
+          <span className="font-semibold text-white">MovieRecs</span>
+        </Link>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/50 hover:text-white transition-colors"
+          >
+            <Github size={18} />
+          </a>
+        </div>
+      </header>
+
+      <div className="relative py-6 px-6 max-w-7xl mx-auto">
+        {/* Top Bar Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div className="h-12 w-64 rounded-lg animate-skeleton" />
+          <div className="h-10 w-80 rounded-lg animate-skeleton" />
+        </div>
+
+        {/* Skeleton Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <MovieCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function Dashboard() {
   const router = useRouter()
   const movies = Route.useLoaderData() as Movie[]
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<'movie' | 'series'>('movie')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
-  const filteredMovies = movies.filter((movie) => 
-    activeTab === 'movie' ? movie.type === 'movie' : movie.type === 'series'
+  // Filter movies by type
+  const filteredMovies = useMemo(() => 
+    movies.filter((movie) => 
+      activeTab === 'movie' ? movie.type === 'movie' : movie.type === 'series'
+    ),
+    [movies, activeTab]
   )
+
+  // Calculate pagination
+  const totalPages = Math.max(1, Math.ceil(filteredMovies.length / itemsPerPage))
+  const paginatedMovies = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return filteredMovies.slice(startIndex, startIndex + itemsPerPage)
+  }, [filteredMovies, currentPage, itemsPerPage])
+
+  // Handle tab change - reset to page 1
+  const handleTabChange = (tab: 'movie' | 'series') => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
+
+  // Handle items per page change - reset to page 1
+  const handleItemsPerPageChange = (items: number) => {
+    setItemsPerPage(items)
+    setCurrentPage(1)
+  }
 
   const handleAddMovie = async (imdbId: string) => {
     await addMovie({ data: imdbId })
@@ -64,7 +133,7 @@ function Dashboard() {
           {/* Tabs */}
           <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
             <button
-              onClick={() => setActiveTab('movie')}
+              onClick={() => handleTabChange('movie')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === 'movie'
                   ? 'bg-white text-black'
@@ -80,7 +149,7 @@ function Dashboard() {
               </span>
             </button>
             <button
-              onClick={() => setActiveTab('series')}
+              onClick={() => handleTabChange('series')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
                 activeTab === 'series'
                   ? 'bg-white text-black'
@@ -104,12 +173,13 @@ function Dashboard() {
         {/* Grid */}
         {filteredMovies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="p-5 rounded-full mb-5 bg-white/5 border border-white/10">
-              {activeTab === 'movie' ? (
-                <Film className="w-10 h-10 text-white/40" />
-              ) : (
-                <Tv className="w-10 h-10 text-white/40" />
-              )}
+            {/* Custom illustration */}
+            <div className="w-40 h-40 mb-6 transition-transform hover:scale-105">
+              <img 
+                src={activeTab === 'movie' ? '/empty-movies.svg' : '/empty-tvshows.svg'}
+                alt={`No ${activeTab === 'movie' ? 'movies' : 'TV shows'}`}
+                className="w-full h-full"
+              />
             </div>
             
             <h2 className="text-xl font-medium text-white mb-2">
@@ -141,21 +211,33 @@ function Dashboard() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredMovies.map((movie) => (
-              <div key={movie.id} className="relative">
-                {isDeleting === movie.id && (
-                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
-                    <Loader2 className="w-5 h-5 animate-spin text-white" />
-                  </div>
-                )}
-                <MovieCard 
-                  movie={movie} 
-                  onDelete={handleDeleteMovie}
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {paginatedMovies.map((movie) => (
+                <div key={movie.id} className="relative">
+                  {isDeleting === movie.id && (
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-xl flex items-center justify-center z-10">
+                      <Loader2 className="w-5 h-5 animate-spin text-white" />
+                    </div>
+                  )}
+                  <MovieCard 
+                    movie={movie} 
+                    onDelete={handleDeleteMovie}
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredMovies.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          </>
         )}
       </div>
     </div>

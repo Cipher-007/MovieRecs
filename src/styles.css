@@ -16,6 +16,51 @@
   animation: spotlight 2s ease 0.75s 1 forwards;
 }
 
+/* Spotlight fade transition */
+.spotlight-fade {
+  transition: opacity 0.5s ease-in-out;
+}
+
+.spotlight-fade.hidden {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Skeleton pulse animation for variety */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-skeleton-pulse {
+  animation: skeleton-pulse 2s ease-in-out infinite;
+}
+
 body {
   @apply m-0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
