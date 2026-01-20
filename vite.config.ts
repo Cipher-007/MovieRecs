@@ -16,21 +16,7 @@ const config = defineConfig({
   },
   plugins: [
     devtools(),
-    nitro({
-      preset: 'vercel',
-      rollupConfig: {
-        external: [
-          '@libsql/linux-x64-gnu',
-          '@libsql/linux-x64-musl',
-          '@libsql/linux-arm64-gnu',
-          '@libsql/linux-arm64-musl',
-          '@libsql/darwin-x64',
-          '@libsql/darwin-arm64',
-          '@libsql/win32-x64-msvc',
-          'libsql',
-        ],
-      },
-    }),
+    nitro(),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
@@ -42,4 +28,5 @@ const config = defineConfig({
 })
 
 export default config
+
 
