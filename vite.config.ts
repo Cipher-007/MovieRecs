@@ -12,8 +12,6 @@ const config = defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // Force @libsql/client to use the web version
-      '@libsql/client': '@libsql/client/web',
     },
   },
   plugins: [
