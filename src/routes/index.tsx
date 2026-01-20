@@ -1,95 +1,92 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Film, Plus, Star, Sparkles, Clapperboard, ArrowRight, Zap } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Film, Plus, Star, Sparkles, Clapperboard, ArrowRight, Github } from 'lucide-react'
+import { Spotlight } from '../components/Spotlight'
 
 export const Route = createFileRoute('/')({ component: LandingPage })
 
 function LandingPage() {
+  const [showSpotlight, setShowSpotlight] = useState(true)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowSpotlight(window.scrollY < 100)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const features = [
     {
-      icon: <Film className="w-8 h-8" />,
+      icon: <Film className="w-6 h-6" />,
       title: 'Track Your Movies',
       description: 'Add movies from IMDB and keep track of your entire collection in one place.',
-      gradient: 'from-cyan-500 to-blue-500',
     },
     {
-      icon: <Star className="w-8 h-8" />,
+      icon: <Star className="w-6 h-6" />,
       title: 'Ratings & Details',
       description: 'View ratings, plot summaries, cast information, and more for every movie.',
-      gradient: 'from-yellow-500 to-orange-500',
     },
     {
-      icon: <Sparkles className="w-8 h-8" />,
+      icon: <Sparkles className="w-6 h-6" />,
       title: 'Beautiful Design',
       description: 'Enjoy a modern, sleek interface that makes browsing your collection a pleasure.',
-      gradient: 'from-purple-500 to-pink-500',
     },
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] overflow-hidden">
-      {/* Animated background gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[40%] -left-[20%] w-[80%] h-[80%] bg-gradient-to-br from-cyan-500/30 via-blue-600/20 to-transparent rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute -bottom-[40%] -right-[20%] w-[80%] h-[80%] bg-gradient-to-tl from-purple-600/30 via-pink-500/20 to-transparent rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-[30%] left-[50%] w-[40%] h-[40%] bg-gradient-to-r from-orange-500/10 via-red-500/10 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '4s' }} />
-      </div>
-
-      {/* Grid pattern overlay */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:64px_64px] pointer-events-none" />
+    <div className="min-h-screen bg-black overflow-hidden">
+      {/* Grid background */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none" />
+      {/* Spotlight effect - fixed above header, hides on scroll */}
+      {showSpotlight && <Spotlight className="fixed -top-40 left-[30%] z-30" fill="white" />}
+      {/* Header */}
+      <header className="sticky top-0 z-40 px-6 h-14 flex items-center justify-between backdrop-blur-md bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] bg-black/80">
+        <Link to="/" className="flex items-center gap-2">
+          <Clapperboard size={20} className="text-white" />
+          <span className="font-semibold text-white">MovieRecs</span>
+        </Link>
+        <a
+          href="https://github.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white/50 hover:text-white transition-colors"
+        >
+          <Github size={18} />
+        </a>
+      </header>
 
       {/* Hero Section */}
       <section className="relative py-24 px-6 text-center">
-        <div className="relative max-w-5xl mx-auto">
-          {/* Glowing orb behind logo */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-full blur-[80px] opacity-40" />
-          
-          {/* Logo */}
-          <div className="relative flex items-center justify-center gap-4 mb-10">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity" />
-              <div className="relative p-5 bg-gradient-to-br from-cyan-500 via-blue-600 to-purple-600 rounded-2xl shadow-2xl">
-                <Clapperboard className="w-14 h-14 text-white" />
-              </div>
+        
+        <div className="relative max-w-3xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+              <Clapperboard className="w-10 h-10 text-white" />
             </div>
           </div>
           
-          {/* Title */}
-          <h1 className="text-6xl md:text-8xl font-black mb-6 tracking-tight leading-none">
-            <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent drop-shadow-lg">
-              Movie
-            </span>
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+            Movie
             <br />
-            <span className="text-white">
-              Recommendations
-            </span>
+            <span className="text-white/60">Recommendations</span>
           </h1>
           
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl bg-gradient-to-r from-gray-300 to-gray-400 bg-clip-text text-transparent mb-4 font-light max-w-2xl mx-auto">
-            Your personal movie collection, beautifully organized
-          </p>
-          <p className="text-gray-500 max-w-xl mx-auto mb-12 text-lg">
-            Search for movies by title and build your curated collection with detailed information, ratings, and stunning visuals.
+          <p className="text-lg text-white/50 mb-8 max-w-xl mx-auto">
+            Your personal movie collection, beautifully organized. Track movies and TV shows with detailed information and ratings.
           </p>
           
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/dashboard"
-              className="group relative px-10 py-5 overflow-hidden rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105"
+              className="flex items-center gap-2 px-6 py-3 bg-white text-black font-medium rounded-full hover:bg-white/90 transition-all"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 transition-all duration-300" />
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute inset-[2px] bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="relative flex items-center gap-3 text-white">
-                <Zap className="w-5 h-5" />
-                Get Started
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              </span>
+              Get Started
+              <ArrowRight size={16} />
             </Link>
             <Link
               to="/dashboard"
-              className="group px-10 py-5 bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/30 text-white font-semibold text-lg rounded-2xl transition-all duration-300 hover:bg-white/10"
+              className="flex items-center gap-2 px-6 py-3 text-white/70 hover:text-white font-medium transition-colors"
             >
               View Dashboard
             </Link>
@@ -98,103 +95,77 @@ function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="relative py-20 px-6 max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-4">
-          <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            Why use Movie Recommendations?
-          </span>
+      <section className="py-20 px-6 max-w-4xl mx-auto">
+        <h2 className="text-2xl font-semibold text-white text-center mb-12">
+          Why use MovieRecs?
         </h2>
-        <p className="text-gray-500 text-center mb-16 max-w-2xl mx-auto">
-          Everything you need to manage your personal movie collection
-        </p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
-              className="group relative p-8 rounded-3xl transition-all duration-500 hover:scale-[1.02]"
+              className="p-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.07] transition-colors"
             >
-              {/* Gradient border */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl`} />
-              <div className="absolute inset-[1px] bg-gradient-to-br from-white/10 to-white/5 rounded-3xl" />
-              <div className="absolute inset-[1px] bg-[#0a0a0f]/90 rounded-3xl" />
-              
-              {/* Content */}
-              <div className="relative">
-                <div className={`mb-6 p-4 bg-gradient-to-br ${feature.gradient} rounded-2xl w-fit shadow-lg`}>
-                  <div className="text-white">
-                    {feature.icon}
-                  </div>
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-400 leading-relaxed text-lg">
-                  {feature.description}
-                </p>
+              <div className="mb-4 p-3 bg-white/10 rounded-lg w-fit text-white">
+                {feature.icon}
               </div>
+              <h3 className="text-lg font-medium text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-white/50">
+                {feature.description}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How it Works Section */}
-      <section className="relative py-20 px-6 max-w-5xl mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-16">
-          <span className="bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            How it Works
-          </span>
+      {/* How it Works */}
+      <section className="py-20 px-6 max-w-3xl mx-auto">
+        <h2 className="text-2xl font-semibold text-white text-center mb-12">
+          How it Works
         </h2>
         
-        <div className="relative">
-          {/* Connection line */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500/20 via-purple-500/40 to-pink-500/20" />
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-            {[
-              { step: '1', title: 'Search for Movie', desc: 'Type the name of any movie you love', color: 'from-cyan-500 to-blue-500' },
-              { step: '2', title: 'Select Result', desc: 'Choose the correct movie from the list', color: 'from-purple-500 to-pink-500' },
-              { step: '3', title: 'Add to Collection', desc: 'Click to add it to your dashboard!', color: 'from-orange-500 to-red-500' },
-            ].map((item, index) => (
-              <div key={index} className="flex-1 text-center group">
-                <div className="relative inline-block mb-6">
-                  <div className={`absolute inset-0 bg-gradient-to-r ${item.color} rounded-full blur-lg opacity-50 group-hover:opacity-100 transition-opacity`} />
-                  <div className={`relative w-20 h-20 bg-gradient-to-br ${item.color} rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-2xl`}>
-                    {item.step}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
-                <p className="text-gray-500">{item.desc}</p>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          {[
+            { step: '1', title: 'Search', desc: 'Find any movie or TV show' },
+            { step: '2', title: 'Select', desc: 'Pick from the results' },
+            { step: '3', title: 'Add', desc: 'Save to your collection' },
+          ].map((item, index) => (
+            <div key={index} className="flex-1 text-center">
+              <div className="w-12 h-12 mx-auto mb-4 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white font-medium">
+                {item.step}
               </div>
-            ))}
-          </div>
+              <h3 className="font-medium text-white mb-1">{item.title}</h3>
+              <p className="text-sm text-white/40">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Footer CTA */}
-      <section className="relative py-24 px-6 text-center">
-        <div className="relative max-w-3xl mx-auto">
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 via-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl" />
-          
-          <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to build your collection?
-            </h2>
-            <p className="text-gray-400 mb-8 text-lg">
-              Start adding movies now and create your personalized movie library.
-            </p>
-            <Link
-              to="/dashboard"
-              className="group inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:from-cyan-400 hover:via-blue-400 hover:to-purple-500 text-white font-bold text-lg rounded-2xl transition-all duration-300 hover:scale-105 shadow-lg shadow-purple-500/25"
-            >
-              <Plus className="w-6 h-6" />
-              Go to Dashboard
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
+      <section className="py-20 px-6 text-center">
+        <div className="max-w-md mx-auto p-8 bg-white/5 border border-white/10 rounded-2xl">
+          <h2 className="text-xl font-semibold text-white mb-3">
+            Ready to start?
+          </h2>
+          <p className="text-white/50 mb-6 text-sm">
+            Build your personalized movie library today.
+          </p>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-black font-medium rounded-full hover:bg-white/90 transition-colors"
+          >
+            <Plus size={16} />
+            Go to Dashboard
+          </Link>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="py-6 px-6 text-center text-white/30 text-sm border-t border-white/10">
+        MovieRecs — Your personal movie collection
+      </footer>
     </div>
   )
 }

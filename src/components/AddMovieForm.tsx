@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, AlertCircle, CheckCircle, Search, X } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, CheckCircle, Search, X, Command } from 'lucide-react';
 import { searchMovies } from '../server/movies';
 import type { OMDBSearchResult } from '../server/omdb';
 
@@ -8,205 +8,242 @@ interface AddMovieFormProps {
 }
 
 export default function AddMovieForm({ onSubmit }: AddMovieFormProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState<OMDBSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) inputRef.current.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      if (e.key === 'Escape' && isOpen) closeModal();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleArrowNav = (e: KeyboardEvent) => {
+      if (results.length === 0) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev + 1) % results.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
+      } else if (e.key === 'Enter' && results.length > 0) {
+        e.preventDefault();
+        handleSelectMovie(results[selectedIndex]);
+      }
+    };
+    document.addEventListener('keydown', handleArrowNav);
+    return () => document.removeEventListener('keydown', handleArrowNav);
+  }, [isOpen, results, selectedIndex]);
+
+  useEffect(() => { setSelectedIndex(0); }, [results]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setShowResults(false);
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) closeModal();
+    }
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    const performSearch = async () => {
+      const trimmedQuery = debouncedQuery.trim();
+      if (trimmedQuery.length <= 2) { setResults([]); return; }
+      setIsSearching(true);
+      setError(null);
+      try {
+        const data = await searchMovies({ data: { query: debouncedQuery } });
+        setResults(data);
+      } catch (err) {
+        console.error(err);
+        setError('Search failed');
+      } finally {
+        setIsSearching(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [wrapperRef]);
+    performSearch();
+  }, [debouncedQuery]);
 
-  const handleSearch = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setIsSearching(true);
+  const closeModal = () => {
+    setIsOpen(false);
+    setQuery('');
+    setResults([]);
     setError(null);
-    try {
-      const data = await searchMovies({ data: searchTerm });
-      setResults(data);
-      setShowResults(true);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to search movies');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    if (value.length > 2) {
-      debounceRef.current = setTimeout(() => {
-        handleSearch(value);
-      }, 500);
-    } else {
-      setResults([]);
-      setShowResults(false);
-    }
   };
 
   const handleSelectMovie = async (movie: OMDBSearchResult) => {
-    // Select logic
     setIsAdding(true);
     setError(null);
-    setSuccess(false);
-    setShowResults(false);
-    setQuery('');
-
     try {
       await onSubmit(movie.imdbID);
       setSuccess(true);
+      closeModal();
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add movie');
-      setQuery(movie.Title); // Restore query so user can try again if they want
+      setError(err instanceof Error ? err.message : 'Failed to add');
     } finally {
       setIsAdding(false);
     }
   };
 
-  const clearSearch = () => {
-    setQuery('');
-    setResults([]);
-    setShowResults(false);
-  };
-
   return (
-    <div ref={wrapperRef} className="w-full max-w-md relative">
-      <div className="flex flex-col gap-3">
-        <label htmlFor="movie-search" className="text-sm font-medium text-gray-400">
-          Add a movie by title
-        </label>
-        
-        <div className="relative">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-            <Search size={18} />
-          </div>
+    <>
+      {/* Trigger */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg text-white/60 hover:text-white transition-all text-sm"
+      >
+        <Search size={16} />
+        <span className="hidden sm:inline">Search...</span>
+        <kbd className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded text-xs text-white/40 ml-2">
+          <Command size={10} />K
+        </kbd>
+      </button>
 
-          <input
-            id="movie-search"
-            type="text"
-            value={query}
-            onChange={handleInputChange}
-            onFocus={() => query.length > 2 && setShowResults(true)}
-            placeholder="Search for a movie..."
-            disabled={isAdding}
-            className="w-full pl-11 pr-10 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 transition-all"
-            autoComplete="off"
-          />
-
-          {query && (
-            <button 
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-            >
-              <X size={16} />
-            </button>
-          )}
+      {/* Success Toast */}
+      {success && (
+        <div className="fixed bottom-4 right-4 flex items-center gap-2 text-white text-sm bg-white/10 border border-white/20 rounded-lg px-4 py-3 z-[60] backdrop-blur-sm">
+          <CheckCircle size={16} />
+          Added successfully!
         </div>
+      )}
 
-        {/* Results Dropdown */}
-        {showResults && results.length > 0 && (
-          <div className="absolute top-[calc(100%+8px)] left-0 right-0 max-h-80 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-100 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
-            {results.map((movie) => (
-              <button
-                key={movie.imdbID}
-                onClick={() => handleSelectMovie(movie)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-slate-700 transition-colors text-left border-b border-slate-700 last:border-0"
-              >
-                <div className="w-10 h-14 bg-slate-900 rounded overflow-hidden flex-shrink-0">
-                  {movie.Poster !== 'N/A' ? (
-                    <img src={movie.Poster} alt={movie.Title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">N/A</div>
-                  )}
-                </div>
-                <div>
-                  <h4 className="font-medium text-white line-clamp-1">{movie.Title}</h4>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span>{movie.Year}</span>
-                    <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
-                    <span className="uppercase">{movie.Type}</span>
-                  </div>
-                </div>
-                <div className="ml-auto">
-                   <Plus size={16} className="text-cyan-400" />
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {/* Loading State for Search */}
-        {isSearching && showResults && results.length === 0 && (
-           <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-slate-800 border border-slate-700 rounded-xl p-4 text-center z-50">
-             <Loader2 className="w-6 h-6 animate-spin mx-auto text-cyan-400 mb-2" />
-             <p className="text-sm text-gray-400">Searching...</p>
-           </div>
-        )}
-
-        {/* No Results */}
-        {!isSearching && query.length > 2 && showResults && results.length === 0 && (
-            <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-slate-800 border border-slate-700 rounded-xl p-4 text-center z-50">
-              <p className="text-sm text-gray-400">No movies found</p>
+      {/* Modal */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh]">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          
+          <div
+            ref={modalRef}
+            className="relative w-full max-w-xl mx-4 bg-neutral-950 border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+          >
+            {/* Search Input */}
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
+              <Search size={18} className="text-white/40" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search movies & TV shows..."
+                disabled={isAdding}
+                className="flex-1 bg-transparent text-white placeholder-white/40 focus:outline-none text-sm"
+                autoComplete="off"
+              />
+              {isSearching && <Loader2 size={16} className="text-white animate-spin" />}
+              {query && !isSearching && (
+                <button onClick={() => setQuery('')} className="text-white/40 hover:text-white">
+                  <X size={16} />
+                </button>
+              )}
             </div>
-        )}
 
-        {/* Helper text if not Success/Error */}
-        {!error && !success && !isAdding && (
-          <p className="text-xs text-gray-500">
-            Type at least 3 characters to search
-          </p>
-        )}
-        
-        {/* Loading Add */}
-        {isAdding && (
-           <div className="flex items-center gap-2 text-cyan-400 text-sm bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-3">
-             <Loader2 size={16} className="animate-spin" />
-             Adding movie...
-           </div>
-        )}
+            {/* Results */}
+            <div className="max-h-[360px] overflow-y-auto">
+              {isSearching && query.trim().length > 2 && (
+                <div className="p-6 text-center text-white/40 text-sm">Searching...</div>
+              )}
 
-        {/* Error message */}
-        {error && (
-          <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/30 rounded-xl p-3">
-            <AlertCircle size={16} />
-            {error}
+              {!isSearching && results.length > 0 && (
+                <div className="py-2">
+                  {results.map((movie, index) => (
+                    <button
+                      key={movie.imdbID}
+                      onClick={() => handleSelectMovie(movie)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
+                        selectedIndex === index ? 'bg-white/10' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="w-10 h-14 bg-white/10 rounded overflow-hidden flex-shrink-0">
+                        {movie.Poster !== 'N/A' ? (
+                          <img src={movie.Poster} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/30 text-xs">N/A</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white text-sm font-medium truncate">{movie.Title}</div>
+                        <div className="flex items-center gap-2 text-xs text-white/40 mt-0.5">
+                          <span>{movie.Year}</span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] uppercase font-medium bg-white/10">
+                            {movie.Type === 'movie' ? 'Movie' : 'Series'}
+                          </span>
+                        </div>
+                      </div>
+                      <Plus size={16} className={`text-white transition-opacity ${
+                        selectedIndex === index ? 'opacity-100' : 'opacity-0'
+                      }`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!isSearching && results.length === 0 && query.trim().length > 2 && (
+                <div className="p-6 text-center text-white/40 text-sm">No results found</div>
+              )}
+
+              {!isSearching && query.trim().length <= 2 && (
+                <div className="p-6 text-center text-white/40 text-sm">Type to search...</div>
+              )}
+
+              {error && (
+                <div className="mx-4 mb-4 p-3 flex items-center gap-2 text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg text-sm">
+                  <AlertCircle size={16} />
+                  {error}
+                </div>
+              )}
+
+              {isAdding && (
+                <div className="mx-4 mb-4 p-3 flex items-center gap-2 text-white bg-white/10 border border-white/20 rounded-lg text-sm">
+                  <Loader2 size={16} className="animate-spin" />
+                  Adding...
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between px-4 py-2 border-t border-white/10 text-xs text-white/30">
+              <div className="flex items-center gap-3">
+                <span><kbd className="px-1 py-0.5 bg-white/10 rounded">↑↓</kbd> Navigate</span>
+                <span><kbd className="px-1 py-0.5 bg-white/10 rounded">↵</kbd> Add</span>
+              </div>
+              <span><kbd className="px-1 py-0.5 bg-white/10 rounded">esc</kbd> Close</span>
+            </div>
           </div>
-        )}
-        
-        {/* Success message */}
-        {success && (
-          <div className="flex items-center gap-2 text-green-400 text-sm bg-green-500/10 border border-green-500/30 rounded-xl p-3">
-            <CheckCircle size={16} />
-            Movie added successfully!
-          </div>
-        )}
-      </div>
-    </div>
-  )
+        </div>
+      )}
+    </>
+  );
 }

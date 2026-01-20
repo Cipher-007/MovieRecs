@@ -13,6 +13,7 @@ export const movies = sqliteTable('movies', {
   director: text('director'),
   actors: text('actors'),
   runtime: text('runtime'),
+  type: text('type').notNull().default('movie'),
   createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`(unixepoch())`),
 })
 

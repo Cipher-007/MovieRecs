@@ -67,14 +67,24 @@ export interface OMDBSearchResponse {
   Error?: string
 }
 
-export async function searchMoviesByTitle(query: string): Promise<OMDBSearchResult[]> {
+export async function searchMoviesByTitle(query: string, type?: string): Promise<OMDBSearchResult[]> {
   const apiKey = process.env.OMDB_API_KEY
   
   if (!apiKey) {
     throw new Error('OMDB_API_KEY is not configured')
   }
 
-  const url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(query)}&type=movie`
+  // Trim the query to remove leading/trailing whitespace that can cause empty results
+  const trimmedQuery = query.trim()
+  if (!trimmedQuery) {
+    return []
+  }
+
+  // Build URL - only add type filter if specified
+  let url = `https://www.omdbapi.com/?apikey=${apiKey}&s=${encodeURIComponent(trimmedQuery)}`
+  if (type) {
+    url += `&type=${type}`
+  }
   
   try {
     const response = await fetch(url)

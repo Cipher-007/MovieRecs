@@ -51,6 +51,7 @@ export const addMovie = createServerFn({ method: 'POST' })
       director: omdbMovie.Director,
       actors: omdbMovie.Actors,
       runtime: omdbMovie.Runtime,
+      type: omdbMovie.Type,
     }
 
     const result = await db.insert(movies).values(newMovie).returning()
@@ -71,7 +72,7 @@ export const deleteMovie = createServerFn({ method: 'POST' })
 import { searchMoviesByTitle } from './omdb'
 
 export const searchMovies = createServerFn({ method: 'GET' })
-  .inputValidator((d: string) => d)
+  .inputValidator((d: { query: string; type?: string }) => d)
   .handler(async ({ data }) => {
-    return await searchMoviesByTitle(data)
+    return await searchMoviesByTitle(data.query, data.type)
   })
