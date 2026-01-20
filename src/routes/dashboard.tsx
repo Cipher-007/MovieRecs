@@ -106,11 +106,11 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
+    <div className="h-screen bg-black overflow-hidden flex flex-col">
       {/* Grid background */}
       <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] pointer-events-none" />
       {/* Header */}
-      <header className="sticky top-0 z-40 px-6 h-14 flex items-center justify-between backdrop-blur-md bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] bg-black/80">
+      <header className="sticky top-0 z-40 px-6 h-14 flex-shrink-0 flex items-center justify-between backdrop-blur-md bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[size:100px_100px] bg-black/80">
         <Link to="/" className="flex items-center gap-2">
           <Clapperboard size={20} className="text-white" />
           <span className="font-semibold text-white">MovieRecs</span>
@@ -127,9 +127,9 @@ function Dashboard() {
         </div>
       </header>
 
-      <div className="relative py-6 px-6 max-w-7xl mx-auto">
+      <div className="relative flex-1 flex flex-col py-4 px-6 max-w-7xl mx-auto w-full overflow-hidden">
         {/* Top Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 flex-shrink-0">
           {/* Tabs */}
           <div className="flex items-center gap-1 p-1 bg-white/5 border border-white/10 rounded-lg">
             <button
@@ -212,7 +212,8 @@ function Dashboard() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {paginatedMovies.map((movie) => (
                 <div key={movie.id} className="relative">
                   {isDeleting === movie.id && (
@@ -226,17 +227,20 @@ function Dashboard() {
                   />
                 </div>
               ))}
+              </div>
             </div>
             
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredMovies.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={handleItemsPerPageChange}
-            />
+            {/* Pagination - fixed at bottom */}
+            <div className="flex-shrink-0">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredMovies.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
           </>
         )}
       </div>
